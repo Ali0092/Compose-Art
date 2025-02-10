@@ -77,7 +77,7 @@ fun BeachScene() {
         viewportHeight = 1024f,
         autoMirror = true,
     ) { _, _ ->
-        //Vector Composables
+        //Vector Composable
         Group(name = "Beach_Scene") {
             Path(pathData = BeachScenePaths.treePart, fill = SolidColor(Color(0xff795548)))
             Path(pathData = BeachScenePaths.leaf1Path, fill = SolidColor(Color(0xff57C927)))
