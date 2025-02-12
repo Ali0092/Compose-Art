@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RandomPatterns(modifier: Modifier = Modifier) {
-    Canvas(modifier.background(com.example.compose_art.dayGradient)) {
+    Canvas(modifier.background(color = Color.White)) {
 
 
         drawRoundRect(
@@ -127,7 +127,7 @@ fun calculateOffSet(size: Size, rectAngleWidth: Float, rectAngleHeight: Float ):
 @Composable
 fun CirclePatters(modifier: Modifier = Modifier) {
     Spacer(modifier = modifier
-        .background(com.example.compose_art.dayGradient)
+        .background(color = Color.White)
         .drawBehind {
 
             drawCircle(
