@@ -25,3 +25,7 @@ ComposeArt is a Jetpack Compose Canvas experiment repository where I explore cre
 
 (Add GIFs or images here to showcase the experiments)
 
+
+---
+Happy Coding! 🎬
+
