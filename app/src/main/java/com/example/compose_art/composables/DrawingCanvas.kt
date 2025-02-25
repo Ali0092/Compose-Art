@@ -1,144 +1,137 @@
 package com.example.compose_art.composables
 
-import android.annotation.SuppressLint
+import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
-import com.example.compose_art.viewmodel.DrawingAction
-import com.example.compose_art.viewmodel.PathData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.compose_art.R
+import com.example.compose_art.viewmodel.DrawingViewModel
 import kotlin.math.abs
-
-@SuppressLint("UnrememberedMutableState")
-@Composable
-fun DotDrawing(modifier: Modifier = Modifier) {
-
-    val offSetList = remember { mutableStateOf<List<Offset>>(emptyList()) }
-    var circlePath by mutableStateOf<Offset>(Offset(100f,100f))
-
-    var dragX by remember { mutableStateOf<Float>(100f) }
-    var dragY by remember { mutableStateOf<Float>(100f) }
-
-    var dragX2 by remember { mutableStateOf<Float>(100f) }
-    var dragY2 by remember { mutableStateOf<Float>(100f) }
-
-    Box(modifier = modifier
-        .clipToBounds()
-        .background(Color.White)){
-
-        Canvas(modifier = modifier
-            .clipToBounds()
-            .background(Color.White)
-            .pointerInput(true) {
-                detectDragGestures(onDragStart = {
-//                    dragX = it.x
-//                    dragY = it.y
-
-                }, onDragEnd = {
-
-                }, onDrag = { change, dragAmount ->
-//                    dragX = change.position.x
-//                    dragY = change.position.y
-                }, onDragCancel = {
-
-                })
-            }) {
-            //here to draw the path,first to make path variable
-            val path = Path().apply {
-                moveTo(0f,0f)
-//            lineTo(size.width,size.height)
-                cubicTo(dragX,dragY, 0f, 0f, size.width,size.height)
-            }
-
-            drawPath(path, color = Color.Black, style =  Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round))
-
-        }
-
-        Canvas(modifier = Modifier
-            .offset { IntOffset(0, 0) }
-            .size(50.dp)
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    dragX = +dragAmount.x
-                    dragY = +dragAmount.y
-                }
-            }){
-            drawCircle(color = Color.Blue, radius = 20f)
-        }
-
-        Canvas(modifier = Modifier
-            .offset { IntOffset(dragX2.toInt(), dragX2.toInt()) }
-            .size(50.dp)
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    dragX2 = change.position.x
-                    dragX2 = change.position.y
-                }
-            }){
-            drawCircle(color = Color.Blue, radius = 20f)
-        }
-
-
-    }
-
-
-}
+import kotlin.math.atan2
+import kotlin.math.cos
 
 @Composable
-fun DrawingCanvas1(
-    paths: List<PathData>,
-    currentPath: PathData?,
-    onAction: (DrawingAction) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun DrawingCanvas() {
 
-    Canvas(
-        modifier = modifier
+    val viewModel: DrawingViewModel = viewModel()
+    val drawingState = viewModel.drawingState.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = Modifier
             .clipToBounds()
-            .background(Color.White)
-            .pointerInput(true) {
-                detectDragGestures(onDragStart = {
-                    onAction(DrawingAction.OnNewPathStart)
-                }, onDragEnd = {
-                    onAction(DrawingAction.OnNewPathEnd)
-                }, onDrag = { change, _ ->
-                    onAction(DrawingAction.onDraw(change.position))
-                }, onDragCancel = {
-                    onAction(DrawingAction.OnNewPathEnd)
-                })
-            }
-
+            .fillMaxSize()
     ) {
-        paths.fastForEach { pathData ->
-            drawPath(pathData.path, pathData.color, 5f)
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(6f)
+                .background(Color.White)
+                .pointerInput(true) {
+                    detectDragGestures(onDragStart = {
+                        viewModel.onNewPathStart()
+//                    onAction(DrawingAction.OnNewPathStart)
+                    }, onDragEnd = {
+                        viewModel.onNewPathEnd()
+//                    onAction(DrawingAction.OnNewPathEnd)
+                    }, onDrag = { change, _ ->
+                        viewModel.onDraw(change.position)
+//                    onAction(DrawingAction.onDraw(change.position))
+                    }, onDragCancel = {
+                        viewModel.onNewPathEnd()
+//                    onAction(DrawingAction.OnNewPathEnd)
+                    })
+                }
+
+        ) {
+            //all Paths
+            drawingState.value.paths.fastForEach { pathData ->
+                val angle = atan2(pathData.path.first().y, pathData.path.first().y)
+                val width = 20f * cos(angle)
+                drawPath(pathData.path, color = pathData.color, width)
+            }
+            //current Path
+            drawingState.value.currentPath?.let {
+                val angle = atan2(it.path.first().y, it.path.first().y)
+                val width = 20f * cos(angle)
+                drawPath(it.path, color = it.color,   width)
+            }
         }
-        currentPath?.let {
-            drawPath(it.path, it.color, 5f)
+
+        Row(modifier =  Modifier.fillMaxWidth()
+            .height(60.dp)
+            .weight(1f)
+            .background(Color.LightGray)
+            .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+            ) {
+            Box(modifier = Modifier.size(50.dp)
+                .background(Color.Red)
+                .clickable {
+                viewModel.onSetColor(Color.Red)
+            })
+
+            Box(modifier = Modifier.size(50.dp)
+                .background(Color.Green)
+                .clickable {
+                    viewModel.onSetColor(Color.Green)
+                })
+
+            Box(modifier = Modifier.size(50.dp)
+                .background(Color.White)
+                .clickable {
+                    viewModel.onSetColor(Color.White)
+                })
+
+            Box(modifier = Modifier.size(50.dp)
+                .background(Color.Black)
+                .clickable {
+                    viewModel.onSetColor(Color.Black)
+                })
+
+            Box(modifier = Modifier.size(50.dp)
+                .background(Color.Yellow)
+                .clickable {
+                    viewModel.onSetColor(Color.Yellow)
+                })
+
         }
     }
+
 }
 
 fun DrawScope.drawPath(
@@ -149,6 +142,7 @@ fun DrawScope.drawPath(
         if (path.isNotEmpty()) {
             moveTo(path.first().x, path.first().y)
             val smoothness = 5
+
             for (i in 1..path.lastIndex) {
                 val from = path[i - 1]
                 val to  = path[i]
@@ -166,59 +160,23 @@ fun DrawScope.drawPath(
 
         }
     }
+
+    val pathh = Path().apply {
+        moveTo(path.first().x, path.first().y)
+        for (i in 1..path.lastIndex) {
+            lineTo(path[i].x,path[i].y)
+        }
+
+    }
+
+
+   // Adjust width based on direction
     drawPath(
-        path = smoothedPath,
+        path = pathh,
         color = color,
         style = Stroke(
             width = strokeWidth,
             cap = StrokeCap.Round,
             join = StrokeJoin.Round)
     )
-}
-
-
-data class Line(
-    val start: Offset, val end: Offset, val color: Color = Color.Black, val strokeWidth: Dp = 5.dp
-)
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun DrawingCanvas() {
-
-    var points by remember { mutableStateOf<List<Offset>>(emptyList()) }
-
-    Canvas(modifier = Modifier
-        .fillMaxSize()
-        .background(color = Color.White)
-        .pointerInput(Unit) {
-
-            detectDragGestures(onDragStart = { touchPoint ->
-                points = listOf(touchPoint)
-            }, onDrag = { change, _ ->
-//                val pointsFromHistory = change.historical
-//                    .map { it.position }
-//                    .toTypedArray()
-//                val newPoints = listOf(*pointsFromHistory, change.position)
-                points = points + change.position
-            })
-
-        }) {
-        if (points.size > 1) {
-            val path = Path().apply {
-                val firstPoint = points.first()
-                val rest = points.subList(1, points.size - 1)
-
-                moveTo(firstPoint.x, firstPoint.y)
-                rest.forEach {
-                    lineTo(it.x, it.y)
-                }
-            }
-
-            drawPath(
-                path,
-                color = Color.Black,
-                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
-            )
-        }
-    }
 }

@@ -9,15 +9,14 @@ import kotlinx.coroutines.flow.update
 
 //Drawing state to represent the current state (containing all the required information) in the current action
 data class DrawingState(
-    val selectedColor: Color = Color.Black,
     val currentPath: PathData? = null,
+    val selectedColor: Color = Color.Black,
     val paths: List<PathData> = emptyList()
 )
 //data class
 data class PathData(
-    val id: String,
-    val color: Color,
-    val path: List<Offset>
+    val path: List<Offset>,
+    val color: Color = Color.Black
 )
 
 sealed class DrawingAction { //Again a state management approach to handle user actions
@@ -27,14 +26,6 @@ sealed class DrawingAction { //Again a state management approach to handle user 
 //    data class OnSelectColor(val color: Color) : DrawingAction()
     data object OnClearedCanvasClicked : DrawingAction()
 }
-
-val allColors = listOf(
-    Color.Black,
-    Color.Red,
-    Color.Blue,
-    Color.Green,
-    Color.Yellow,
-)
 
 class DrawingViewModel: ViewModel() {
 
@@ -59,7 +50,7 @@ class DrawingViewModel: ViewModel() {
           }
       }
 
-    private fun onClearedCanvasClicked() {
+    fun onClearedCanvasClicked() {
         _drawingState.update {
             it.copy(
                 currentPath = null,
@@ -68,29 +59,35 @@ class DrawingViewModel: ViewModel() {
         }
     }
 
-    private fun onNewPathStart() {
+    fun onNewPathStart() {
         _drawingState.update {
             it.copy(
                 currentPath = PathData(
-                    id = System.currentTimeMillis().toString(),
-                    color = it.selectedColor,
-                    path = emptyList()
+                    path = emptyList(),
+                    color = it.selectedColor
                 )
             )
         }
     }
 
-    private fun onDraw(offset: Offset) {
+    fun onDraw(offset: Offset) {
         val currentPathData = drawingState.value.currentPath?: return
         _drawingState.update {
-            it.copy(currentPath = currentPathData.copy(path = currentPathData.path + offset))
+            it.copy(currentPath = currentPathData.copy(path = currentPathData.path + offset,
+                color = currentPathData.color))
         }
     }
 
-    private fun onNewPathEnd() {
+    fun onNewPathEnd() {
         val currentPathData = drawingState.value.currentPath?: return
         _drawingState.update {
             it.copy(currentPath = null, paths = it.paths + currentPathData)
+        }
+    }
+
+    fun onSetColor(color: Color) {
+        _drawingState.update {
+            it.copy(selectedColor = color)
         }
     }
 
