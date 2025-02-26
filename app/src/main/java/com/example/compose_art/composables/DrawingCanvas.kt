@@ -1,5 +1,9 @@
 package com.example.compose_art.composables
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Paint
+import android.graphics.Shader
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,19 +33,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asComposePaint
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.compose_art.R
 import com.example.compose_art.viewmodel.DrawingViewModel
 import kotlin.math.abs
 
@@ -142,6 +156,23 @@ fun DrawingCanvas() {
             }
         }
 
+        val context = LocalContext.current
+//        val bitmap = remember {
+//            val resId = R.drawable.texture1 // Replace with your image
+//            val original = BitmapFactory.decodeResource(context.resources, resId)
+//
+//            // Resize the bitmap to 50x50 pixels
+//            Bitmap.createScaledBitmap(original, 50, 50, true).asImageBitmap()
+//        }
+//
+//        val brushBitmap = rememberBrushBitmap()
+//        val paint = Paint().apply {
+//            shader = ImageShader(brushBitmap.asImageBitmap(), TileMode.Repeated, TileMode.Repeated)
+//            alpha = 150 // Adjust transparency for realism
+//        }
+
+        val x = rememberSprayPaintBrush()
+
         Canvas(modifier = Modifier
             .fillMaxWidth()
             .weight(6f)
@@ -161,16 +192,39 @@ fun DrawingCanvas() {
         ) {
             //all Paths
             drawingState.value.paths.fastForEach { pathData ->
-                drawPath(pathData.path, color = pathData.color, strokeWidth = 10f)
+                drawPath(pathData.path, color = pathData.color, strokeWidth = 50f)
             }
             //current Path
             drawingState.value.currentPath?.let {
-
-                drawPath(it.path, color = it.color, strokeWidth = 10f)
+                drawPath(it.path, color = it.color, strokeWidth = 50f)
             }
         }
     }
 
+}
+@Composable
+fun rememberBrushBitmap(): ImageBitmap {
+    val context = LocalContext.current
+    return remember {
+        BitmapFactory.decodeStream(context.assets.open("texture1.webp")).asImageBitmap() // Place the image in assets folder
+    }
+}
+
+@Composable
+fun rememberSprayPaintBrush(): Brush {
+    val brushBitmap = rememberBrushBitmap()
+
+    return remember {
+        object : ShaderBrush() {
+            override fun createShader(size: Size): Shader {
+                return ImageShader(
+                    brushBitmap,
+                    TileMode.Repeated, // Repeat texture in X direction
+                    TileMode.Repeated  // Repeat texture in Y direction
+                )
+            }
+        }
+    }
 }
 
 fun DrawScope.drawPath(
@@ -198,8 +252,11 @@ fun DrawScope.drawPath(
     }
 
     // Adjust width based on direction
+
     drawPath(
-        path = smoothedPath, color = color, style = Stroke(
+        path = smoothedPath,
+        color = color,
+            style = Stroke(
             width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round
         )
     )

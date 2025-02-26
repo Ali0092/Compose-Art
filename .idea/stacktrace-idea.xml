@@ -5,6 +5,7 @@
       <set>
         <option value="$PROJECT_DIR$/app/build/generated/res/resValues/debug" />
         <option value="$PROJECT_DIR$/app/src/androidTest/java" />
+        <option value="$PROJECT_DIR$/app/src/main/assets" />
         <option value="$PROJECT_DIR$/app/src/main/java" />
         <option value="$PROJECT_DIR$/app/src/main/res" />
         <option value="$PROJECT_DIR$/app/src/test/java" />
