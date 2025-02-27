@@ -23,7 +23,18 @@ ComposeArt is a Jetpack Compose Canvas experiment repository where I explore cre
 📸 Preview
 ----
 
-(Add GIFs or images here to showcase the experiments)
+## [Drawing Canvas](https://github.com/Ali0092/Compose-Art/blob/main/app/src/main/java/com/example/compose_art/composables/DrawingCanvas.kt)
+
+https://github.com/user-attachments/assets/af35f854-62f7-421d-8273-3766cd6e5732
+
+## [Cubic Bezier](https://github.com/Ali0092/Compose-Art/blob/main/app/src/main/java/com/example/compose_art/composables/DraggableCircles.kt)
+
+https://github.com/user-attachments/assets/5abf3861-0886-49a4-9126-f3d58bec25fc
+
+## [Beach Scene VectorGraphics](https://github.com/Ali0092/Compose-Art/blob/main/app/src/main/java/com/example/compose_art/composables/BeachScene.kt)
+
+https://github.com/user-attachments/assets/b2f663d0-d2cc-4221-a8a4-5fb123109f17
+
 
 
 ---
