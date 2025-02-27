@@ -1,10 +1,10 @@
 package com.example.compose_art.composables
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Paint
-import android.graphics.Shader
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
@@ -33,29 +32,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.asComposePaint
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.compose_art.R
+import com.example.compose_art.utils.Utils.brushList
+import com.example.compose_art.utils.Utils.colorsList
 import com.example.compose_art.viewmodel.DrawingViewModel
 import kotlin.math.abs
 
@@ -65,28 +62,13 @@ fun DrawingCanvas() {
     val viewModel: DrawingViewModel = viewModel()
     val drawingState = viewModel.drawingState.collectAsStateWithLifecycle()
     var showColorRow by remember { mutableStateOf(false) }
+    var showBrushes by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column(
-        modifier = Modifier
-            .clipToBounds()
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
-
-        val colorsList = mutableListOf(
-            Color.Red,
-            Color.Yellow,
-            Color.Green,
-            Color.White,
-            Color.Blue,
-            Color.DarkGray,
-            Color.Magenta,
-            Color.Black,
-            Color.Cyan,
-            Color.LightGray,
-            Color.Gray
-        )
-
-        //Top Row....
+        //Top Bar
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,84 +80,56 @@ fun DrawingCanvas() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Row(modifier = Modifier
-                    .height(40.dp)
-                    .weight(1f)
-                    .clickable {
-                        showColorRow = !showColorRow
-                    },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(text = "Colors", textAlign = TextAlign.Center, fontSize = 16.sp)
-                }
-
-                Row(
+                //brushes
+                TopRowItem(
                     modifier = Modifier
                         .height(40.dp)
-                        .weight(1f)
-                        .clickable {
-                            viewModel.onSetColor(Color.White)
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                        .weight(1f), "Brushes"
                 ) {
-                    Text(text = "Eraser", textAlign = TextAlign.Center, fontSize = 16.sp)
+                    showBrushes = !showBrushes
                 }
-                Row(
+                //Colors
+                TopRowItem(
                     modifier = Modifier
                         .height(40.dp)
-                        .weight(1f)
-                        .clickable {
-                            viewModel.onClearedCanvasClicked()
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                        .weight(1f), "Colors"
                 ) {
-                    Text(text = "Clear", textAlign = TextAlign.Center, fontSize = 16.sp)
+                    showColorRow = !showColorRow
                 }
-
+                //Eraser
+                TopRowItem(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .weight(1f), "Eraser"
+                ) {
+                    viewModel.onSetColor(Color.White)
+                    viewModel.onSetBrush(null)
+                }
+                //Clear Canvas
+                TopRowItem(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .weight(1f), "Clear"
+                ) {
+                    viewModel.onClearedCanvasClicked()
+                }
             }
+            //brushes row
+            if (showBrushes) {
+                BrushesRow(context, viewModel = viewModel)
+            }
+            //color selection row
             if (showColorRow) {
-                LazyRow(modifier = Modifier.padding(top = 10.dp), state = rememberLazyListState()) {
-                    items(colorsList) { color ->
-                        Card(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .background(color)
-                                .clickable {
-                                    viewModel.onSetColor(color)
-                                },
-                            shape = RoundedCornerShape(50.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = color
-                            )
-                        ) {}
-                    }
-                }
+                ColorsRow(viewModel)
             }
+
         }
 
-        val context = LocalContext.current
-//        val bitmap = remember {
-//            val resId = R.drawable.texture1 // Replace with your image
-//            val original = BitmapFactory.decodeResource(context.resources, resId)
-//
-//            // Resize the bitmap to 50x50 pixels
-//            Bitmap.createScaledBitmap(original, 50, 50, true).asImageBitmap()
-//        }
-//
-//        val brushBitmap = rememberBrushBitmap()
-//        val paint = Paint().apply {
-//            shader = ImageShader(brushBitmap.asImageBitmap(), TileMode.Repeated, TileMode.Repeated)
-//            alpha = 150 // Adjust transparency for realism
-//        }
-
-        val x = rememberSprayPaintBrush()
-
+        //Canvas
         Canvas(modifier = Modifier
             .fillMaxWidth()
             .weight(6f)
+            .clipToBounds()
             .background(Color.White)
             .pointerInput(true) {
                 detectDragGestures(onDragStart = {
@@ -192,35 +146,17 @@ fun DrawingCanvas() {
         ) {
             //all Paths
             drawingState.value.paths.fastForEach { pathData ->
-                drawPath(pathData.path, color = pathData.color, strokeWidth = 50f)
+                drawPath(
+                    path = pathData.path,
+                    image = pathData.brush,
+                    color = pathData.color,
+                    strokeWidth = 50f
+                )
             }
             //current Path
             drawingState.value.currentPath?.let {
-                drawPath(it.path, color = it.color, strokeWidth = 50f)
-            }
-        }
-    }
-
-}
-@Composable
-fun rememberBrushBitmap(): ImageBitmap {
-    val context = LocalContext.current
-    return remember {
-        BitmapFactory.decodeStream(context.assets.open("texture1.webp")).asImageBitmap() // Place the image in assets folder
-    }
-}
-
-@Composable
-fun rememberSprayPaintBrush(): Brush {
-    val brushBitmap = rememberBrushBitmap()
-
-    return remember {
-        object : ShaderBrush() {
-            override fun createShader(size: Size): Shader {
-                return ImageShader(
-                    brushBitmap,
-                    TileMode.Repeated, // Repeat texture in X direction
-                    TileMode.Repeated  // Repeat texture in Y direction
+                drawPath(
+                    path = it.path, image = it.brush, color = it.color, strokeWidth = 50f
                 )
             }
         }
@@ -228,7 +164,7 @@ fun rememberSprayPaintBrush(): Brush {
 }
 
 fun DrawScope.drawPath(
-    path: List<Offset>, color: Color, strokeWidth: Float
+    path: List<Offset>, image: ImageBitmap? = null, color: Color, strokeWidth: Float
 ) {
     val smoothedPath = Path().apply {
         if (path.isNotEmpty()) {
@@ -251,13 +187,82 @@ fun DrawScope.drawPath(
         }
     }
 
-    // Adjust width based on direction
-
-    drawPath(
-        path = smoothedPath,
-        color = color,
-            style = Stroke(
-            width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round
+    if (image != null) {
+        path.forEach { offSet ->
+            drawImage(image, topLeft = offSet, colorFilter = ColorFilter.tint(color))
+        }
+    } else {
+        drawPath(
+            path = smoothedPath, color = color, style = Stroke(
+                width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round
+            )
         )
-    )
+    }
+}
+
+fun getBitmapOfImage(context: Context, resId: Int?): ImageBitmap? {
+    if (resId == null) {
+        return null
+    }
+    val original = BitmapFactory.decodeResource(context.resources, resId)
+    return Bitmap.createScaledBitmap(original, 100, 100, true).asImageBitmap()
+}
+
+@Composable
+fun TopRowItem(modifier: Modifier = Modifier, text: String = "", onItemClicked: () -> Unit) {
+    Row(
+        modifier = modifier.clickable {
+            onItemClicked()
+        },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(text = text, textAlign = TextAlign.Center, fontSize = 16.sp)
+    }
+
+}
+
+@Composable
+fun BrushesRow(context: Context, viewModel: DrawingViewModel) {
+    LazyRow(
+        modifier = Modifier.padding(top = 10.dp),
+        state = rememberLazyListState()) {
+        items(brushList) { img ->
+            Card(modifier = Modifier
+                .size(50.dp)
+                .padding(3.dp)
+                .clickable {
+                    viewModel.onSetBrush(
+                        getBitmapOfImage(
+                            context, img.brushResource
+                        )
+                    )
+                }) {
+                Image(
+                    painter = painterResource(img.brushPlaceHolder),
+                    contentDescription = "",
+                    contentScale = ContentScale.FillBounds
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ColorsRow(viewModel: DrawingViewModel) {
+    LazyRow(
+        modifier = Modifier.padding(top = 10.dp),
+        state = rememberLazyListState()) {
+        items(colorsList) { color ->
+            Card(
+                modifier = Modifier
+                    .size(35.dp)
+                    .background(color)
+                    .clickable {
+                        viewModel.onSetColor(color)
+                    },
+                colors = CardDefaults.cardColors(containerColor = color)
+            ) {}
+        }
+    }
 }
